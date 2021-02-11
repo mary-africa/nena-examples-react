@@ -4,6 +4,17 @@ import HelperErrorText from './components/HelperErrorText'
 import ProtectedField from './components/ProtectedField'
 import { getEmotionSentimentValues } from './utils'
 
+function ErrorPopup ({ err }: { err: string | null }){
+  if (err === null) {
+    return (<></>)
+  }
+  
+  return (
+    <div>
+      {err}
+    </div>
+  )
+}
 
 function App() {
   const [apiKey, setApiKey] = useState<string>("")
@@ -45,6 +56,7 @@ function App() {
   
   return (
     <div className="h-screen w-full flex flex-row items-center justify-center">
+      <ErrorPopup err={err} />
       <div className="mx-auto container justify-center grid grid-rows-2 gap-6 md:grid-rows-none md:grid-cols-2 md:justify-start md:items-center px-12">
         {/* left | top entry section */}
         <section className="max-w-md flex flex-col items-start md:items-end">
