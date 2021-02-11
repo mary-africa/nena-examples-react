@@ -8,9 +8,9 @@ function ErrorPopup ({ err }: { err: string | null }){
   if (err === null) {
     return (<></>)
   }
-  
+
   return (
-    <div>
+    <div className="absolute bottom-0">
       {err}
     </div>
   )
@@ -46,8 +46,7 @@ function App() {
             setEmotion(output)
           })
           .catch(err => {
-            console.log(err)
-            setErr(err)
+            setErr(err.message)
           })
           .finally(() => setLoading(false))
 
