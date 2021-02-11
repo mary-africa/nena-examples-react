@@ -1,23 +1,12 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react'
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="h-screen w-full flex flex-row items-center justify-center">
+      <div className='w-64'>
+      <h1 className="text-3xl font-bold">Maandishi Hisia</h1>
+      <h4 className="text-sm font-medium text-gray-500">Emotional sentiment analysis service using Nena API</h4>
+      </div>
     </div>
   );
 }
