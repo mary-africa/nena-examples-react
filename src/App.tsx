@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { EmotionSentimentBars } from './components/EmotionSentimentBars'
+import HelperErrorText from './components/HelperErrorText'
+import ProtectedField from './components/ProtectedField'
 import { getEmotionSentimentValues } from './utils'
 
 
