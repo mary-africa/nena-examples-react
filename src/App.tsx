@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { FormEvent, useCallback, useState } from 'react'
 import { EmotionSentimentBars } from './components/EmotionSentimentBars'
 
 
@@ -21,7 +21,7 @@ function ProtectedField({ value, ...inputProps }: any) {
 
   return (
     <div className="w-full my-2">
-      <div className="mb-1 relative rounded-md shadow-sm w-full">
+      <div className="mb-1 relative rounded-md shadow-sm w-full flex flex-row">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           {/* Heroicon name: solid/key */}
           <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -29,7 +29,7 @@ function ProtectedField({ value, ...inputProps }: any) {
           </svg>
         </div>
         <input {...inputProps} type={visible ? 'text': 'password'} value={value} className="focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 block w-full py-2 pl-10 sm:text-sm border-gray-300 rounded-md" />
-        <button onClick={() => setVisible(!visible)} className="absolute inset-y-0 -right-11 px-3 z-10 flex items-center">
+        <button onClick={() => setVisible(!visible)} className="px-3 z-10 flex items-center">
           {/* <!-- Heroicon name: solid/question-mark-circle --> */}
             {
               visible ? (
@@ -53,6 +53,9 @@ function ProtectedField({ value, ...inputProps }: any) {
 function App() {
   const [apiKey, setApiKey] = useState("")
   const onChangeApiKeyInput = (e: any) => setApiKey(e.target.value)
+
+  const onSubmitForm = (e: React.FormEvent<HTMLFormElement>) => {
+  }
   
   return (
     <div className="h-screen w-full flex flex-row items-center justify-center">
@@ -64,7 +67,7 @@ function App() {
             <h4 className="text-sm font-medium text-gray-500">Emotional sentiment analysis service using Nena API</h4>
             <ProtectedField value={apiKey} onChange={onChangeApiKeyInput} placeholder="API_KEY" />
           </div>
-          <form className="my-4 w-full text-left md:text-right">
+          <form className="my-4 w-full text-left md:text-right" onSubmit={onSubmitForm}>
             <div>
               <textarea className="w-full h-24 resize-none border rounded-md px-3 py-3 focus:outline-none" placeholder="Andika chochote..."/>
               <div className="space-x-3 flex text-left">
