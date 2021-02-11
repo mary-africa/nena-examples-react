@@ -107,6 +107,7 @@ function App() {
   const apiKeyCache = localStorage.getItem(STORAGE_KEY)
   const isApiKeyCache = !(apiKeyCache === null)
   const [apiKey, setApiKey] = useState<string>(apiKeyCache === null ? "": apiKeyCache)
+  const [apiInputErr, setApiInputErr] = useState<boolean>(false)
 
   // for the input text
   const [value, setValue] = useState<string>("")
@@ -121,8 +122,10 @@ function App() {
 
   const onChangeApiKeyInput = (e: any) => {
     setHasSaved(false)
+    setApiInputErr(false)
     setApiKey(e.target.value)
   }
+
   const onChangeTextInput = (e: any) => {
     setShowInputErr(false)
     setValue(e.target.value)
@@ -139,27 +142,33 @@ function App() {
 
 
   const onSubmitForm = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setLoading(true)
     setErr(null)
+
+    if (apiKey.length === 0) {
+      setApiInputErr(true)
+      setLoading(false)
+      return;      
+    }
 
     // check input
     if (value.length === 0) {
       setShowInputErr(true)
       setLoading(false)
-    } else {
-      getEmotionSentimentValues(apiKey, value)
-        .then(output => {
-          console.log(output)
-          setEmotion(output)
-        })
-        .catch(err => {
-          setErr(err.message)
-        })
-        .finally(() => setLoading(false))
-  }
+      return;
+    } 
 
+    getEmotionSentimentValues(apiKey, value)
+      .then(output => {
+        console.log(output)
+        setEmotion(output)
+      })
+      .catch(err => {
+        setErr(err.message)
+      })
+      .finally(() => setLoading(false))
 
-    e.preventDefault()
   }, [apiKey, value])
 
   
@@ -174,14 +183,15 @@ function App() {
               <h1 className="text-3xl font-bold">Hisia Maandishi</h1>
               <h4 className="text-sm font-medium text-gray-500">Emotional sentiment analysis service using Nena API</h4>
             </div>
-            <div className="flex flex-row space-x-2 h-12 w-full md:w-96">
+            <div className="flex flex-row space-x-2 w-full items-start md:w-96">
               <ProtectedField 
                 value={apiKey}
+                errShow={apiInputErr}
                 onChange={onChangeApiKeyInput} 
                 placeholder="API_KEY" />
               <button
                 onClick={onSaveApiKey}
-                className="inline-flex h-full mt-1 focus:outline-none flex-row px-2 w-auto items-center space-x-1 group">
+                className="inline-flex h-full py-2 focus:outline-none flex-row px-2 w-auto items-center space-x-1 group">
                 {
                   !hasSaved ? (
                     <svg className="h-5 w-5 text-green-400 group-hover:text-green-500 transition duration-100 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
