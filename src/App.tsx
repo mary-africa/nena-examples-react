@@ -1,5 +1,6 @@
-import React, { FormEvent, useCallback, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { EmotionSentimentBars } from './components/EmotionSentimentBars'
+import { getEmotionSentimentValues } from './utils'
 
 
 function HelperErrorText({ value }: any) {
@@ -51,11 +52,42 @@ function ProtectedField({ value, ...inputProps }: any) {
 
 
 function App() {
-  const [apiKey, setApiKey] = useState("")
-  const onChangeApiKeyInput = (e: any) => setApiKey(e.target.value)
+  const [apiKey, setApiKey] = useState<string>("")
+  const [value, setValue] = useState<string>("")
 
-  const onSubmitForm = (e: React.FormEvent<HTMLFormElement>) => {
-  }
+  const onChangeApiKeyInput = (e: any) => setApiKey(e.target.value)
+  const onChangeTextInput = (e: any) => setValue(e.target.value)
+
+
+  // true is the fetched value is loading
+  const [loading, setLoading] = useState<boolean>(true)
+
+  // The emotion value of shape: EmotionSentimentValues
+  const [emotion, setEmotion] = useState<EmotionOutput | undefined>(undefined)
+
+  // Error message for when there is a problem
+  const [err, setErr] = useState<string | null>(null)
+
+
+  const onSubmitForm = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    console.log('Submitting form')
+
+    setLoading(true)
+    setErr(null)
+
+      getEmotionSentimentValues(apiKey, value)
+          .then(output => {
+            console.log(output)
+            setEmotion(output)
+          })
+          .catch(err => {
+            console.log(err)
+            setErr(err)
+          })
+          .finally(() => setLoading(false))
+
+    e.preventDefault()
+  }, [apiKey, value])
   
   return (
     <div className="h-screen w-full flex flex-row items-center justify-center">
@@ -69,7 +101,7 @@ function App() {
           </div>
           <form className="my-4 w-full text-left md:text-right" onSubmit={onSubmitForm}>
             <div>
-              <textarea className="w-full h-24 resize-none border rounded-md px-3 py-3 focus:outline-none" placeholder="Andika chochote..."/>
+              <textarea value={value} onChange={onChangeTextInput} className="w-full h-24 resize-none border rounded-md px-3 py-3 focus:outline-none" placeholder="Andika chochote..."/>
               <div className="space-x-3 flex text-left">
                 <HelperErrorText value="Please make sure you have entered something" />
                 {/* right: message counter */}
@@ -95,11 +127,7 @@ function App() {
             </p>
           </div>
           <div className="w-full">
-            <EmotionSentimentBars
-              happy={0.45}
-              sad={0.25}
-              fearful={0.15}
-              anger={0.1} />
+            <EmotionSentimentBars loading={loading} emotions={emotion !== undefined ? emotion.dist : undefined}/>
           </div>
         </section>
       </div>

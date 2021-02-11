@@ -21,10 +21,8 @@ interface EmotionSentimentBarsProps {
     /**
      * The number sentiments for the emotion sentiments
      */
-    happy: sentimentNumber
-    sad: sentimentNumber,
-    anger: sentimentNumber,
-    fearful: sentimentNumber,
+    emotions?: EmotionOutput['dist']
+    loading: boolean
 }
 
 /**
@@ -51,13 +49,18 @@ function EmotionSentimentBar({ label, value, className }: { label: string, value
 }
 
 export function EmotionSentimentBars(props: EmotionSentimentBarsProps) {
-  return (
-    <div className="grid grid-flow-row gap-2 w-full">
-        {/* Happy emotion */}
-        <EmotionSentimentBar label={props.happyLabel || "Furaha" } value={props.happy} className="block bg-green-400 h-full transform duration-200 ease-out" />
-        <EmotionSentimentBar label={props.fearfulLabel || "Hofu" } value={props.fearful} className="block bg-blue-400 h-full transform duration-200 ease-out" />
-        <EmotionSentimentBar label={props.sadLabel || "Huzuni" } value={props.sad} className="block bg-indigo-400 h-full transform duration-200 ease-out" />
-        <EmotionSentimentBar label={props.angerLabel || "Furaha" } value={props.anger} className="block bg-red-400 h-full transform duration-200 ease-out" />
-    </div>
-  )
+    if (props.emotions === undefined) {
+        return (
+            <div>Nothing to show</div>
+        )
+    }
+    return (
+        <div className="grid grid-flow-row gap-2 w-full">
+            {/* Happy emotion */}
+            <EmotionSentimentBar label={props.happyLabel || "Furaha" } value={props.emotions.happy} className="block bg-green-400 h-full transform duration-200 ease-out" />
+            <EmotionSentimentBar label={props.fearfulLabel || "Hofu" } value={props.emotions.fearful} className="block bg-blue-400 h-full transform duration-200 ease-out" />
+            <EmotionSentimentBar label={props.sadLabel || "Huzuni" } value={props.emotions.sad} className="block bg-indigo-400 h-full transform duration-200 ease-out" />
+            <EmotionSentimentBar label={props.angerLabel || "Furaha" } value={props.emotions.anger} className="block bg-red-400 h-full transform duration-200 ease-out" />
+        </div>
+    )
 }
