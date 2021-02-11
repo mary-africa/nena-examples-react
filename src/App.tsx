@@ -1,25 +1,60 @@
-import React, { useCallback, useState } from 'react'
+import { Transition } from '@headlessui/react'
+import React, { useCallback, useEffect, useState } from 'react'
 import BarSection from './components/BarSection'
 import HelperErrorText from './components/HelperErrorText'
 import ProtectedField from './components/ProtectedField'
 import { getEmotionSentimentValues } from './utils'
 
-function ErrorPopup ({ err }: { err: string | null }){
-  if (err === null) {
-    return (<></>)
-  }
+function ErrorPopup ({ err }: { err: string | null }) {
+  const [showErr, setShowErr] = useState(err !== null)
+  
+  useEffect(() => {
+    setShowErr(err !== null)
+  }, [err])
 
   return (
-    <div className="absolute bottom-0">
-      {err}
-    </div>
+    <Transition
+      show={showErr}
+      enter="transition transform duration-100 ease-in-out"
+      enterFrom="scale-95 opacity-0"
+      enterTo="scale-100 opacity-100"
+      leave="transition transform duration-150 ease-in-out"
+      leaveFrom="scale-100 opacity-100"
+      leaveTo="scale-95 opacity-0"
+      className="fixed top-0 inset-x-0 pt-2 sm:pt-5">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+        <div className="p-2 rounded-lg bg-red-600 shadow-lg sm:p-3">
+          <div className="flex items-center justify-between flex-wrap">
+            <div className="w-0 flex-1 flex items-center">
+              <p className="ml-3 font-medium text-white truncate">
+                <span className="inline mb:block">
+                  {err}
+                </span>
+              </p>
+            </div>
+            <div className="order-2 flex-shrink-0 sm:order-3 sm:ml-2">
+              <button
+                onClick={() => setShowErr(false)}
+                type="button" 
+                className="-mr-1 flex p-2 rounded-md transition duration-100 ease-in hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-white">
+                <span className="sr-only">Dismiss</span>
+                {/* <!-- Heroicon name: outline/x --> */}
+                <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   )
 }
 
 
 function SubmitButton({ children, loading }: any) {
   return (
-    <button disabled={loading} className={`inline-flex flex-row px-4 py-2 my-4 w-full md:w-auto items-center justify-center ${loading ? 'bg-gray-500 hover:bg-gray-600 cursor-not-allowed' : 'bg-green-800 hover:bg-green-900'} rounded-md transition duration-100 text-white`}>
+    <button disabled={loading} className={`inline-flex flex-row px-4 py-2 my-4 w-full md:w-auto items-center justify-center ${loading ? 'bg-gray-500 hover:bg-gray-600 cursor-not-allowed' : 'bg-green-800 hover:bg-green-900'} focus:outline-none rounded-md transition duration-100 text-white`}>
       {/* Heroicon: small-check */}
       {
         Boolean(loading) ? (
@@ -28,7 +63,7 @@ function SubmitButton({ children, loading }: any) {
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         ) : (
-          <svg className="text-white w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="w-5 h-5 -ml-1 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
         )
@@ -80,8 +115,6 @@ function App() {
   // for the button
   const [hasSaved, setHasSaved] = useState<boolean>(isApiKeyCache)
   const onSaveApiKey = () => {
-    // if(localStorage.getItem(STORAGE_KEY) === null) {
-    // }
     localStorage.setItem(STORAGE_KEY, apiKey)    
     setHasSaved(true)
   }
@@ -135,7 +168,7 @@ function App() {
       <ErrorPopup err={err} />
       <div className="mx-auto container justify-center grid grid-rows-2 gap-6 md:grid-rows-none md:grid-cols-2 md:justify-center md:items-center px-12">
         {/* left | top entry section */}
-        <section className="max-w-full md:w-full inline-flex flex-col items-center md:items-end">
+        <section className="w-full inline-flex flex-col items-center md:items-end">
           <div className='md:items-end md:justify-end flex flex-col space-y-4'>
             <div className="w-64 text-left md:text-right">
               <h1 className="text-3xl font-bold">Hisia Maandishi</h1>
