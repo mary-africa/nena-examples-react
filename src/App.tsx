@@ -16,7 +16,7 @@ function HelperErrorText({ value }: any) {
 function App() {
   return (
     <div className="h-screen w-full flex flex-row items-center justify-center">
-      <div className="mx-auto container grid grid-rows-2 md:grid-rows-none md:grid-cols-2 items-center px-8">
+      <div className="mx-auto container justify-center grid grid-rows-2 md:grid-rows-none md:grid-cols-2 md:justify-start items-center ">
         {/* left | top entry section */}
         <section className="max-w-xs">
           <div className='w-64'>
