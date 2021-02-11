@@ -1,6 +1,6 @@
 import React from 'react'
 
-function HelperErrorText({ value }) {
+function HelperErrorText({ value }: any) {
   return (
     <span className="text-xs inline-flex flex-row space-x-2 text-red-600">
       <svg className="text-xs h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
