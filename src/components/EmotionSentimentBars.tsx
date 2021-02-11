@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react'
+import React from 'react'
 
 /**
  * The range of the values of the sentiment numbers ranges from
