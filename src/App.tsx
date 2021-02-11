@@ -1,7 +1,5 @@
-import { Transition } from '@headlessui/react'
 import React, { useCallback, useState } from 'react'
 import BarSection from './components/BarSection'
-import { EmotionSentimentBars } from './components/EmotionSentimentBars'
 import HelperErrorText from './components/HelperErrorText'
 import ProtectedField from './components/ProtectedField'
 import { getEmotionSentimentValues } from './utils'
