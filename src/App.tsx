@@ -47,9 +47,7 @@ function BarSection({ className, chosen, dist, loading }: BarSectionProps) {
         </p>
       </div>
     )
-  }
-
-  
+  }  
 
   return (
     <section className={className}>
@@ -58,7 +56,7 @@ function BarSection({ className, chosen, dist, loading }: BarSectionProps) {
           chosen !== undefined ? (
             <div className="w-60">
               <p>
-                Maandishi yaonekana kuleta hisia ya: <label className="font-bold capitalize">{outputLabels[chosen]}</label>
+                Hisia iliyo ya juu ni ya: <label className="font-bold capitalize">{outputLabels[chosen]}</label>
               </p>
             </div>
           ) : null
@@ -80,8 +78,7 @@ function BarSection({ className, chosen, dist, loading }: BarSectionProps) {
 
 function SubmitButton({ children, loading }: any) {
   return (
-
-    <button disabled={loading} className={`inline-flex flex-row px-4 py-2 my-2 w-full md:w-auto items-center justify-center ${loading ? 'bg-gray-500 hover:bg-gray-600 cursor-not-allowed' : 'bg-green-800 hover:bg-green-900'} rounded-md transition duration-100 text-white`}>
+    <button disabled={loading} className={`inline-flex flex-row px-4 py-2 my-4 w-full md:w-auto items-center justify-center ${loading ? 'bg-gray-500 hover:bg-gray-600 cursor-not-allowed' : 'bg-green-800 hover:bg-green-900'} rounded-md transition duration-100 text-white`}>
       {/* Heroicon: small-check */}
       {
         Boolean(loading) ? (
@@ -102,20 +99,60 @@ function SubmitButton({ children, loading }: any) {
   )
 }
 
+const TEXT_LIMIT = 160
+function TextField({ value, onChange, className, showError, errorMessage }: any) {
+  const [count, setCount] = useState(0)
+
+  const updateCount = (length: number) => setCount(length)
+
+  return (
+    <div className="w-full">
+      <textarea 
+        maxLength={TEXT_LIMIT}
+        value={value}
+        spellCheck={false}
+        onChange={(e) => {
+          updateCount(e.target.value.length)
+          onChange(e)
+        }}
+        className={className} placeholder="Andika chochote..."/>
+      <div className="flex flex-row-reverse justify-between gap-2 text-left w-full">
+        {/* right: message counter */}
+        <span className="text-gray-500 text-sm whitespace-nowrap">{count} / {TEXT_LIMIT}</span>
+        <HelperErrorText show={showError} value={errorMessage} />
+      </div>
+    </div>
+  )
+}
+
+const STORAGE_KEY = 'API_KEY'
+
 function App() {
-  const [apiKey, setApiKey] = useState<string>("")
+  const apiKeyCache = localStorage.getItem(STORAGE_KEY)
+  const isApiKeyCache = !(apiKeyCache === null)
+  const [apiKey, setApiKey] = useState<string>(apiKeyCache === null ? "": apiKeyCache)
+
+  // for the input text
   const [value, setValue] = useState<string>("")
+  const [showInputErr, setShowInputErr] = useState<boolean>(false)
 
   // for the button
-  const [hasSaved, setHasSaved] = useState<boolean>(false)
+  const [hasSaved, setHasSaved] = useState<boolean>(isApiKeyCache)
   const onSaveApiKey = () => {
-
+    // if(localStorage.getItem(STORAGE_KEY) === null) {
+    // }
+    localStorage.setItem(STORAGE_KEY, apiKey)    
+    setHasSaved(true)
   }
 
-
-  const onChangeApiKeyInput = (e: any) => setApiKey(e.target.value)
-  const onChangeTextInput = (e: any) => setValue(e.target.value)
-
+  const onChangeApiKeyInput = (e: any) => {
+    setHasSaved(false)
+    setApiKey(e.target.value)
+  }
+  const onChangeTextInput = (e: any) => {
+    setShowInputErr(false)
+    setValue(e.target.value)
+  }
 
   // true is the fetched value is loading
   const [loading, setLoading] = useState<boolean>(false)
@@ -128,20 +165,25 @@ function App() {
 
 
   const onSubmitForm = useCallback((e: React.FormEvent<HTMLFormElement>) => {
-    console.log('Submitting form')
-
     setLoading(true)
     setErr(null)
 
+    // check input
+    if (value.length === 0) {
+      setShowInputErr(true)
+      setLoading(false)
+    } else {
       getEmotionSentimentValues(apiKey, value)
-          .then(output => {
-            console.log(output)
-            setEmotion(output)
-          })
-          .catch(err => {
-            setErr(err.message)
-          })
-          .finally(() => setLoading(false))
+        .then(output => {
+          console.log(output)
+          setEmotion(output)
+        })
+        .catch(err => {
+          setErr(err.message)
+        })
+        .finally(() => setLoading(false))
+  }
+
 
     e.preventDefault()
   }, [apiKey, value])
@@ -153,46 +195,40 @@ function App() {
       <div className="mx-auto container justify-center grid grid-rows-2 gap-6 md:grid-rows-none md:grid-cols-2 md:justify-start md:items-center px-12">
         {/* left | top entry section */}
         <section className="max-w-md flex flex-col items-start md:items-end">
-          <div className='items-end justify-end flex flex-col'>
+          <div className='md:items-end md:justify-end flex flex-col space-y-4'>
             <div className="w-64 text-left md:text-right">
               <h1 className="text-3xl font-bold">Hisia Maandishi</h1>
               <h4 className="text-sm font-medium text-gray-500">Emotional sentiment analysis service using Nena API</h4>
             </div>
-            <div className="flex flex-row space-x-2 ">
+            <div className="flex flex-row space-x-2 h-12">
               <ProtectedField 
                 value={apiKey} 
                 onChange={onChangeApiKeyInput} 
                 placeholder="API_KEY" />
-              <button 
-                onChange={undefined}
-                className="inline-flex flex-row p-2 w-full md:w-auto items-center justify-center space-x-2">
+              <button
+                onClick={onSaveApiKey}
+                className="inline-flex h-full mt-1 focus:outline-none flex-row px-2 w-auto items-center space-x-1 group">
                 {
                   !hasSaved ? (
-                    <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    <svg className="h-5 w-5 text-green-400 group-hover:text-green-500 transition duration-100 ease-in-out" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                     </svg>
                   ) : (
-                    <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                    <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )
                 }
-                <span className={!hasSaved ? 'text-gray-400' : 'text-green-400'}>{!hasSaved ? 'Save': 'Saved'}</span>
+                <span className={`${!hasSaved ? 'text-green-400 group-hover:text-green-500' : 'text-gray-400'} transition duration-100 ease-in-out` }>{!hasSaved ? 'Save': 'Saved'}</span>
               </button>
             </div>
           </div>
           <form className="my-4 w-full text-left md:text-right" onSubmit={onSubmitForm}>
             <div>
-              <textarea 
-                value={value} 
-                spellCheck={false}
-                onChange={onChangeTextInput} 
-                className="w-full h-24 resize-none border rounded-md px-3 py-3 focus:outline-none" placeholder="Andika chochote..."/>
-              <div className="space-x-3 flex text-left">
-                <HelperErrorText value="Please make sure you have entered something" />
-                {/* right: message counter */}
-                <span className="text-gray-500 text-sm whitespace-nowrap">40 / 1000</span>
-              </div>
+              <TextField 
+                showError={showInputErr}
+                errorMessage="Make sure you have typed something"
+                className="w-full h-24 resize-none border rounded-md px-3 py-3 focus:outline-none" onChange={onChangeTextInput}/>
             </div>
             <SubmitButton loading={loading}>Peleka</SubmitButton>
           </form>
