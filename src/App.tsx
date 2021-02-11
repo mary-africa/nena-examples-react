@@ -1,4 +1,6 @@
+import { Transition } from '@headlessui/react'
 import React, { useCallback, useState } from 'react'
+import BarSection from './components/BarSection'
 import { EmotionSentimentBars } from './components/EmotionSentimentBars'
 import HelperErrorText from './components/HelperErrorText'
 import ProtectedField from './components/ProtectedField'
@@ -16,65 +18,6 @@ function ErrorPopup ({ err }: { err: string | null }){
   )
 }
 
-/**
- * Output labels corresponding to the sentiment
- */
-const outputLabels: { [type in EmotionSentimentType]: string} = {
-  'happy': "Furaha",
-  'sad': "Huzuni",
-  'anger': "Hasira",
-  'fearful': "Hofu"
-}
-
-interface BarSectionProps {
-  className: string
-  chosen?: EmotionSentimentType,
-  dist?: EmotionSentimentValues,
-  loading: boolean
-}
-
-function BarSection({ className, chosen, dist, loading }: BarSectionProps) {
-  const showChart = chosen || dist
-
-  if (!showChart && !loading) {
-    return (
-      <div className="flex flex-row md:flex-col gap-4">
-        <svg className="h-8 w-8 md:h-12 md:w-12 md:my-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-        </svg>
-        <p className="text-gray-400 md:w-48">
-          Click on the 'Peleka' button to process the sentiment
-        </p>
-      </div>
-    )
-  }  
-
-  return (
-    <section className={className}>
-      <div className="w-full space-y-4">
-        {
-          chosen !== undefined ? (
-            <div className="w-60">
-              <p>
-                Hisia iliyo ya juu ni ya: <label className="font-bold capitalize">{outputLabels[chosen]}</label>
-              </p>
-            </div>
-          ) : null
-        }
-        {
-          dist !== undefined ? (
-            <div className="w-full">
-              <EmotionSentimentBars 
-                loading={loading} 
-                labels={outputLabels}
-                emotions={dist}/>
-            </div>
-          ) : null
-        }
-      </div>
-    </section>
-  )
-}
 
 function SubmitButton({ children, loading }: any) {
   return (
@@ -192,17 +135,17 @@ function App() {
   return (
     <div className="h-screen w-full flex flex-row items-center justify-center">
       <ErrorPopup err={err} />
-      <div className="mx-auto container justify-center grid grid-rows-2 gap-6 md:grid-rows-none md:grid-cols-2 md:justify-start md:items-center px-12">
+      <div className="mx-auto container justify-center grid grid-rows-2 gap-6 md:grid-rows-none md:grid-cols-2 md:justify-center md:items-center px-12">
         {/* left | top entry section */}
-        <section className="max-w-md flex flex-col items-start md:items-end">
+        <section className="max-w-full md:w-full inline-flex flex-col items-center md:items-end">
           <div className='md:items-end md:justify-end flex flex-col space-y-4'>
             <div className="w-64 text-left md:text-right">
               <h1 className="text-3xl font-bold">Hisia Maandishi</h1>
               <h4 className="text-sm font-medium text-gray-500">Emotional sentiment analysis service using Nena API</h4>
             </div>
-            <div className="flex flex-row space-x-2 h-12">
+            <div className="flex flex-row space-x-2 h-12 w-full md:w-96">
               <ProtectedField 
-                value={apiKey} 
+                value={apiKey}
                 onChange={onChangeApiKeyInput} 
                 placeholder="API_KEY" />
               <button
@@ -223,7 +166,7 @@ function App() {
               </button>
             </div>
           </div>
-          <form className="my-4 w-full text-left md:text-right" onSubmit={onSubmitForm}>
+          <form className="my-4 text-left md:text-right w-full md:w-96" onSubmit={onSubmitForm}>
             <div>
               <TextField 
                 showError={showInputErr}
