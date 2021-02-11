@@ -16,6 +16,51 @@ function ErrorPopup ({ err }: { err: string | null }){
   )
 }
 
+/**
+ * Output labels corresponding to the sentiment
+ */
+const outputLabels: { [type in EmotionSentimentType]: string} = {
+  'happy': "Furaha",
+  'sad': "Huzuni",
+  'anger': "Hasira",
+  'fearful': "Hofu"
+}
+
+interface BarSectionProps {
+  className: string
+  chosen?: EmotionSentimentType,
+  dist?: EmotionSentimentValues,
+  loading: boolean
+}
+
+function BarSection({ className, chosen, dist, loading }: BarSectionProps) {
+  return (
+    <section className={className}>
+      <div className="w-full space-y-4">
+        {
+          chosen !== undefined ? (
+            <div className="w-60">
+              <p>
+                Maandishi yaonekana kuleta hisia ya: <label className="font-bold capitalize">{outputLabels[chosen]}</label>
+              </p>
+            </div>
+          ) : null
+        }
+        {
+          dist !== undefined ? (
+            <div className="w-full">
+              <EmotionSentimentBars 
+                loading={loading} 
+                labels={outputLabels}
+                emotions={dist}/>
+            </div>
+          ) : null
+        }
+      </div>
+    </section>
+  )
+}
+
 function App() {
   const [apiKey, setApiKey] = useState<string>("")
   const [value, setValue] = useState<string>("")
@@ -60,13 +105,20 @@ function App() {
         {/* left | top entry section */}
         <section className="max-w-md flex flex-col items-start md:items-end">
           <div className='w-64 text-left md:text-right'>
-            <h1 className="text-3xl font-bold">Maandishi Hisia</h1>
+            <h1 className="text-3xl font-bold">Hisia Maandishi</h1>
             <h4 className="text-sm font-medium text-gray-500">Emotional sentiment analysis service using Nena API</h4>
-            <ProtectedField value={apiKey} onChange={onChangeApiKeyInput} placeholder="API_KEY" />
+            <ProtectedField 
+              value={apiKey} 
+              onChange={onChangeApiKeyInput} 
+              placeholder="API_KEY" />
           </div>
           <form className="my-4 w-full text-left md:text-right" onSubmit={onSubmitForm}>
             <div>
-              <textarea value={value} onChange={onChangeTextInput} className="w-full h-24 resize-none border rounded-md px-3 py-3 focus:outline-none" placeholder="Andika chochote..."/>
+              <textarea 
+                value={value} 
+                spellCheck={false}
+                onChange={onChangeTextInput} 
+                className="w-full h-24 resize-none border rounded-md px-3 py-3 focus:outline-none" placeholder="Andika chochote..."/>
               <div className="space-x-3 flex text-left">
                 <HelperErrorText value="Please make sure you have entered something" />
                 {/* right: message counter */}
@@ -85,16 +137,11 @@ function App() {
           </form>
         </section>
         {/* right | bottom response section */}
-        <section className="max-w-md space-y-4">
-          <div className="w-60">
-            <p>
-              Maandishi yaonekana kuleta hisia ya: <label className="font-bold">Furaha</label>
-            </p>
-          </div>
-          <div className="w-full">
-            <EmotionSentimentBars loading={loading} emotions={emotion !== undefined ? emotion.dist : undefined}/>
-          </div>
-        </section>
+        <BarSection 
+          className="max-w-md"
+          loading={loading}
+          chosen={emotion?.chosen}
+          dist={emotion?.dist} />
       </div>
     </div>
   );

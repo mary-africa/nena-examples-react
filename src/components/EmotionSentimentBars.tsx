@@ -13,15 +13,16 @@ interface EmotionSentimentBarsProps {
     /**
      * The labels for the corresponding emotion sentiments
      */
-    happyLabel?: string
-    sadLabel?: string
-    angerLabel?: string
-    fearfulLabel?: string
+    labels: { [type in EmotionSentimentType]: string }
 
     /**
      * The number sentiments for the emotion sentiments
      */
     emotions?: EmotionOutput['dist']
+
+    /**
+     * state for whether the values are ready to be loaded
+     */
     loading: boolean
 }
 
@@ -57,10 +58,10 @@ export function EmotionSentimentBars(props: EmotionSentimentBarsProps) {
     return (
         <div className="grid grid-flow-row gap-2 w-full">
             {/* Happy emotion */}
-            <EmotionSentimentBar label={props.happyLabel || "Furaha" } value={props.emotions.happy} className="block bg-green-400 h-full transform duration-200 ease-out" />
-            <EmotionSentimentBar label={props.fearfulLabel || "Hofu" } value={props.emotions.fearful} className="block bg-blue-400 h-full transform duration-200 ease-out" />
-            <EmotionSentimentBar label={props.sadLabel || "Huzuni" } value={props.emotions.sad} className="block bg-indigo-400 h-full transform duration-200 ease-out" />
-            <EmotionSentimentBar label={props.angerLabel || "Furaha" } value={props.emotions.anger} className="block bg-red-400 h-full transform duration-200 ease-out" />
+            <EmotionSentimentBar label={props.labels.happy} value={props.emotions.happy} className="block bg-green-400 h-full transform duration-200 ease-out" />
+            <EmotionSentimentBar label={props.labels.fearful } value={props.emotions.fearful} className="block bg-blue-400 h-full transform duration-200 ease-out" />
+            <EmotionSentimentBar label={props.labels.sad } value={props.emotions.sad} className="block bg-indigo-400 h-full transform duration-200 ease-out" />
+            <EmotionSentimentBar label={props.labels.anger } value={props.emotions.anger} className="block bg-red-400 h-full transform duration-200 ease-out" />
         </div>
     )
 }
