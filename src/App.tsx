@@ -1,4 +1,6 @@
 import React from 'react'
+import { EmotionSentimentBars } from './components/EmotionSentimentBars'
+
 
 function HelperErrorText({ value }: any) {
   return (
@@ -16,7 +18,7 @@ function HelperErrorText({ value }: any) {
 function App() {
   return (
     <div className="h-screen w-full flex flex-row items-center justify-center">
-      <div className="mx-auto container justify-center grid grid-rows-2 gap-6 md:grid-rows-none md:grid-cols-2 md:justify-start items-center px-12">
+      <div className="mx-auto container justify-center grid grid-rows-2 gap-6 md:grid-rows-none md:grid-cols-2 md:justify-start md:items-center px-12">
         {/* left | top entry section */}
         <section className="max-w-md flex flex-col items-start md:items-end">
           <div className='w-64 text-left md:text-right'>
@@ -51,41 +53,11 @@ function App() {
             </p>
           </div>
           <div className="w-full">
-            {/* Emotion tools */}
-            <div className="grid grid-flow-row gap-2 w-full">
-              {/* emotion item */}
-              <div className="grid grid-cols-6 gap-4 items-center">
-                <label className="text-right">Furaha</label>
-                <div className="col-span-5 h-5 w-full">
-                  {/* progress bar */}
-                  <span className="block bg-green-400 h-full transform duration-200 ease-out" style={{ width: '55%'}}></span>
-                </div>
-              </div>
-              {/* emotion item */}
-              <div className="grid grid-cols-6 gap-4 items-center">
-                <label className="text-right">Hofu</label>
-                <div className="col-span-5 h-5 w-full">
-                  {/* progress bar */}
-                  <span className="block bg-blue-400 h-full" style={{ width: '15%'}}></span>
-                </div>
-              </div>
-              {/* emotion item */}
-              <div className="grid grid-cols-6 gap-4 items-center">
-                <label className="text-right">Huzuni</label>
-                <div className="col-span-5 h-5 w-full">
-                  {/* progress bar */}
-                  <span className="block bg-indigo-400 h-full" style={{ width: '25%'}}></span>
-                </div>
-              </div>
-              {/* emotion item */}
-              <div className="grid grid-cols-6 gap-4 items-center">
-                <label className="text-right">Hasira</label>
-                <div className="col-span-5 h-5 w-full">
-                  {/* progress bar */}
-                  <span className="block bg-red-400 h-full" style={{ width: '10%'}}></span>
-                </div>
-              </div>
-            </div>
+            <EmotionSentimentBars
+              happy={0.45}
+              sad={0.25}
+              fearful={0.15}
+              anger={0.1} />
           </div>
         </section>
       </div>
