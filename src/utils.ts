@@ -37,6 +37,13 @@ export async function getEmotionSentimentValues(apiKey: string, text: string): P
 
     } catch (err) {
         const { data } = err.response
+
+        if (data === undefined) {
+            // Check the console for the error
+            console.error(err.message)
+            throw new Error("Unable to process the request. Check the console to know more.")
+        }
+
         const { message, code } = data
         
         const msg = `NENA_ERROR [code: ${code.toUpperCase()}] - ${message}`
