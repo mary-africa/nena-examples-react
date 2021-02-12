@@ -26,7 +26,7 @@ function ErrorPopup ({ err }: { err: string | null }) {
         <div className="p-2 rounded-lg bg-red-600 shadow-lg sm:p-3">
           <div className="flex items-center justify-between flex-wrap">
             <div className="w-0 flex-1 flex items-center">
-              <p className="ml-3 font-medium text-white truncate">
+              <p className="ml-3 font-medium text-white">
                 <span className="inline mb:block">
                   {err}
                 </span>

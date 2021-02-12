@@ -36,7 +36,10 @@ export async function getEmotionSentimentValues(apiKey: string, text: string): P
         return { chosen: labels[results[0]], dist: output }
 
     } catch (err) {
-        console.error(err)
-        throw new Error("Something went wrong, Unable to make request. Check the console.log to know more about the error")
+        const { data } = err.response
+        const { message, code } = data
+        
+        const msg = `NENA_ERROR [code: ${code.toUpperCase()}] - ${message}`
+        throw new Error(msg)
     }
 }
