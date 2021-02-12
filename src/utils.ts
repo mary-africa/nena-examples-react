@@ -36,13 +36,14 @@ export async function getEmotionSentimentValues(apiKey: string, text: string): P
         return { chosen: labels[results[0]], dist: output }
 
     } catch (err) {
-        const { data } = err.response
-
-        if (data === undefined) {
+        if (err.response === undefined) {
             // Check the console for the error
             console.error(err.message)
             throw new Error("Unable to process the request. Check the console to know more.")
         }
+
+        const { data } = err.response
+
 
         const { message, code } = data
         
