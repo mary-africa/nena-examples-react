@@ -54,6 +54,7 @@ function ProgressBar ({ progressValue, show }: any) {
 
 interface HomeProps { 
     apiKey: string
+    bearerToken: string
 }
 
 export default function Home(props: HomeProps) {
@@ -61,7 +62,7 @@ export default function Home(props: HomeProps) {
 
     const performSearchQuery = (() => {
         console.log("Searching the information inputted")
-        getTweetByQueryItem(q)
+        getTweetByQueryItem(props.bearerToken, q)
             .then(val => console.log(val))
             .catch(err => console.error(err))
             .finally(() => {
@@ -158,8 +159,11 @@ export default function Home(props: HomeProps) {
     )
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context) {
     return {
-        props: { apiKey:  process.env.NENA_PLAYGROUND_API_KEY }
+        props: { 
+            apiKey: process.env.NENA_PLAYGROUND_API_KEY,
+            bearerToken: process.env.TWITTER_BEARER_TOKEN
+        } as HomeProps
     }
 }

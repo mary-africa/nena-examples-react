@@ -151,13 +151,16 @@ const DEFAULT_TWITTER_QUERY_OPTIONS = {
  * @param twitterQueryOptions query options that can be used to add infromatino about the 
  *  querying of tweets. if undefined (default), it will use the default stated results
  */
-export async function getTweetByQueryItem(q: string, twitterQueryOptions: object = undefined): Promise<TwitterResponse>{
+export async function getTweetByQueryItem(bearer_token: string, q: string, twitterQueryOptions: object = undefined): Promise<TwitterResponse>{
     try {
         const response = await twitterService.get('/search/tweets.json', {
             params: {
                 q,
                 ...(twitterQueryOptions || DEFAULT_TWITTER_QUERY_OPTIONS)
             },
+            headers: {
+                Authorization: `Bearer ${bearer_token}`,
+            }
         })
 
         const trData: TwitterResponse = response.data
