@@ -12,7 +12,6 @@ export const twitterService = axios.create({
         Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN}`,
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET",
-        'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
         "X-Requested-With": "XMLHttpRequest"
     }
 });
