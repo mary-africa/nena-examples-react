@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import { Transition } from '@headlessui/react'
-import { useState } from 'react'
-import { getNPNSentiment, getTweetByQueryItem } from '../utils/query'
+import { useEffect, useState } from 'react'
+import { getNPNSentiment, getTweetByQueryItem, useSentiment, useSentimentStream } from '../utils/query'
 
 
 function TwitterLogo(props: any) {
@@ -47,7 +47,7 @@ function ProgressBar ({ progressValue, show }: any) {
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-0 -translate-y-full"
             className="w-full">
-            <span className="block max-w-full p-0.5 translate transition duration-100 ease-in-out bg-red-500" style={{ width: `${progressValue * 100}%`}} />
+            <span className="block max-w-full p-0.5 transform duration-200 ease-out bg-blue-500" style={{ width: `${progressValue * 100}%`}} />
         </Transition>
     )
 }
@@ -57,25 +57,74 @@ interface HomeProps {
     bearerToken: string
 }
 
+
+const testTexts = [
+    "mimi ni mzembe",
+    "mimi ni mzuri",
+    "nakupenda",
+    "acha ujinga",
+    "nakupenda",
+    "acha ujinga",
+    "nakupenda",
+    "acha ujinga",
+    "nakupenda",
+    "acha ujinga",
+]
+
+function SentimentDataView({ data, loading }: any) {
+    const show = Object.values(data).length === 0
+    return (
+        <section className="w-full py-8">
+            {/* loading animation */}
+            <div className="mx-auto container px-14">
+                <Transition
+                    show={loading}
+                    enter="transition transform duration-75 ease-in-out"
+                    enterFrom="-translate-y-full opacity-0"
+                    enterTo="translate-y-0 opacity-100"
+                    leave="transition transform duration-75 ease-in-out"
+                    leaveFrom="translate-y-0 opacity-100"
+                    leaveTo="-translate-y-full opacity-0"
+                    className="w-full inline-flex flex-row space-x-4 my-3 items-center">
+
+                    {/* Ping animation */}
+                    <span className="relative flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-300 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-400" />
+                    </span>
+                    <span className="text-gray-400 text-3xl">
+                        Loading
+                    </span>
+                </Transition>
+                
+                {/* Show the distribution of data */}
+            </div>
+        </section>
+    )
+}
+
+function SentimentArea({ className, data, progress, loading }: any) {
+    return (
+        <div className={className}>
+            <ProgressBar progressValue={progress} show={loading}/>
+            <SentimentDataView data={data} loading={loading} />
+        </div>
+    )
+}
+
+
 export default function Home(props: HomeProps) {
     const [q, set] = useState<string>("")
+    const [data, setData, loading, progress, err] = useSentiment(props.apiKey)
+    
+    // useEffect(() => {
+    //     console.log(loading, progress)
+    //     console.log("Data:", data)
+    // }, [loading])
 
     const performSearchQuery = (() => {
-        console.log("Searching the information inputted")
-        getTweetByQueryItem(props.bearerToken, q)
-            .then(val => console.log(val))
-            .catch(err => console.error(err))
-            .finally(() => {
-                getNPNSentiment(props.apiKey, [
-                    "mimi ni mzembe",
-                    "mimi ni mzuri",
-                    "nakupenda",
-                    "acha ujinga"
-                ])
-                .then(val => console.log(val))
-                .catch(err => console.error(err))
-            })
-        
+        console.log("Searching the information inputted...")
+        setData(testTexts)
     })
     
     return (
@@ -133,27 +182,10 @@ export default function Home(props: HomeProps) {
                 </div>
 
                 {/* Content */}
-                <div className="border-t border-blue-300">
-                    <ProgressBar progressValue={0.334} show/>
-                    <div className="mx-auto container py-10 px-10">
-                        {/* <div className="flex flex-row gap-4">
-                            <div className="space-y-4">
-                            </div>
-
-                            <aside className="space-y-4">
-                                <div>Obtained <b>34</b> tweets on <b>#elimu-tanzania</b></div>
-
-                                <div className="shadow-md rounded-xl border">
-                                    <AnalyticalGraph width={590} height={400} />
-                                </div>
-                            </aside>
-                        </div> */}
-                        {/* Building the results rendered */}
-                        <div className="">
-                            
-                        </div>
-                    </div>
-                </div>
+                <SentimentArea className="border-t border-blue-300"
+                    data={data}
+                    loading={loading}
+                    progress={progress} />
             </div>
         </>
     )

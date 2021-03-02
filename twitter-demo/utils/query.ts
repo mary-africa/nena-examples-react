@@ -2,6 +2,9 @@
  * Utility functions used accros the app
  */
 
+import axios from 'axios';
+import produce from 'immer'
+import { useState } from "react";
 import { nenaService, twitterService } from "./api";
 
 /**
@@ -25,8 +28,8 @@ interface SentimentOutput<LabelType extends string> {
  * @param apiKey API Key to access Nena service
  * @param texts The list of texts (up to `COUNT_OF_TEXTS`) for sending to the sentiment analysis
  */
-export async function getNPNSentiment(apiKey: string, texts: Array<string>): Promise<Array<SentimentOutput<NPNLabelType>>> {
-    if (texts.length > COUNT_OF_TEXTS) {
+export async function getNPNSentiment(apiKey: string, texts: { [id: number]: string }): Promise<{ [id: number]: SentimentOutput<NPNLabelType>}> {
+    if (Object.values(texts).length > COUNT_OF_TEXTS) {
         throw new Error("Make sure there are ATMOST 5 items in the `texts` list object")
     }
 
@@ -37,7 +40,7 @@ export async function getNPNSentiment(apiKey: string, texts: Array<string>): Pro
             data: {
                 apiKey,
                 payload: {
-                    texts
+                    texts: Object.values(texts)
                 }
             }
         })
@@ -46,16 +49,19 @@ export async function getNPNSentiment(apiKey: string, texts: Array<string>): Pro
         const { labels } = info
         const { logits } = metadata
 
-        return texts.map((_, text_idx) => {
+
+        const mainOutput: { [id: number]: SentimentOutput<NPNLabelType>} = {}
+        Object.keys(texts).forEach((ix, text_idx) => {
             const output: SentimentValues<NPNLabelType> = {} as SentimentValues<NPNLabelType>
     
             labels.forEach((label: NPNLabelType, ix: number) => {
                 output[label] = logits[text_idx][ix]
             });
         
-            return { chosen: labels[results[text_idx]], dist: output }
+            mainOutput[ix] = { chosen: labels[results[text_idx]], dist: output }
         })
 
+        return mainOutput
     } catch (err) {
         if (err.response === undefined) {
             // Check the console for the error
@@ -71,72 +77,6 @@ export async function getNPNSentiment(apiKey: string, texts: Array<string>): Pro
         const msg = `NENA_ERROR [code: ${code.toUpperCase()}] - ${message}`
         throw new Error(msg)
     }
-}
-
-
-interface TwitterResponse {
-    statuses: Array<TwitterStatus>
-    search_metadata: TwitterSearchMetadata
-}
-
-interface TwitterStatus {
-    created_at: string
-    id: number
-    id_str: number
-    text: string
-    truncated: boolean
-    entities: {
-        hashtags: string[]
-        symbols: string[]
-        user_mentions: Array<{
-            screen_name: string
-            name: string
-            id: number
-            id_str: string
-            indices: number[]
-        }>
-        urls: unknown[]
-    },
-    user: {
-        id: number
-        id_str: number
-        name: string
-        screen_name: string
-        location: string
-        description: string
-        url: null | string
-        entities: {
-            description: {
-                urls: unknown[]
-            }
-        }
-    }
-}
-
-interface TwitterSearchMetadata {
-    completed_in: number // [0, 1] (elements of R)
-    max_id: number
-    max_id_str: string
-
-    /**
-     * query string to get the information of the next results
-     */
-    next_results: string
-
-    /**
-     * query string used in obtain the results
-     */
-    query: string
-
-    refresh_url: string
-
-    /**
-     * number of items searched for in the current query
-     */
-    count: number
-
-    since_id: number
-    since_id_str: string
 }
 
 const DEFAULT_TWITTER_QUERY_OPTIONS = {
@@ -182,3 +122,181 @@ export async function getTweetByQueryItem(bearer_token: string, q: string, twitt
         }
     }
 }
+
+
+type SentimentData = { [id: number]: SentimentOutput<NPNLabelType> }
+
+// the text cap
+const limit = COUNT_OF_TEXTS
+
+async function * streamSentiments(apiKey: string, texts: Array<string>): AsyncGenerator<[SentimentData, number], any, any>{
+    const allDataLength = texts.length
+
+    // split the data into batches that can be worked on
+    let N = allDataLength
+    if (N === 0) {
+        let errMessage = ("Please make sure you have atleast on input in the string")
+        // setErr(errMessage)
+
+        throw new Error(errMessage)
+    } else {
+        let start_idx = 0
+        let end_idx: number = undefined
+
+        let iter_count = 0
+        while (start_idx < N) {
+            // last index
+            end_idx = Math.min(limit - 1, N - start_idx) + start_idx
+            // end_idx = 
+
+            console.log(iter_count, ": ", start_idx, " | ", end_idx)
+
+            // but the set of texts needed to make 
+            //  the single request prediction
+            const temp_texts = {}
+            for (let ix = start_idx; ix <= end_idx ; ix++) {
+                temp_texts[ix] = texts[ix]
+            }
+
+            // the `temp_texts` has stored the temporary texts
+            //  for determining the sentiments in batches
+            // try {
+            //     // console.log("Check the contents: ", temp_texts)
+                
+            // } catch (err) {
+            //     throw err
+            // }
+            const chunk = await getNPNSentiment(apiKey, temp_texts)
+            const chunkSize = (end_idx - start_idx)
+
+            yield [chunk, chunkSize]
+
+            // update the indices
+            start_idx = end_idx + 1
+            iter_count++
+        }
+    }
+}
+
+export function useSentiment(apiKey: string): [SentimentData, (texts: Array<string>) => Promise<void>, boolean, number, (string | null)] {
+    const [loading, setLoadstate] = useState<boolean>(false)
+    const [progress, setProgress] = useState<number>(0)
+    const [err, setErr] = useState<string | null>(null)
+
+    // The data to render the content
+
+    const [data, set] = useState<SentimentData>({})  
+    
+    const setData = async (texts: Array<string>) => {
+        // set data
+        setErr(null)
+        setLoadstate(true)
+        setProgress(0)
+
+        // reset data
+        set({})
+
+        // length of the data
+        const _len = texts.length
+
+        try {
+            for await (const chunkProg of streamSentiments(apiKey, texts)) {
+                const [chunk, chunkSize] = chunkProg
+
+                // Chunk
+                set(data => ({ ...data, ...chunk }))
+
+                // Progress bar
+                setProgress(prog => prog + ((chunkSize + 1) / _len))
+            }
+        } catch (err) {
+            // setting err
+            setErr(err.message)
+        }
+
+        // Done loading
+        setLoadstate(false)
+    }
+
+    return [data, setData, loading, progress, err]
+}
+
+
+/**
+ * Streaming the predictions for sentiment analysis
+ * Since the tool only allows working with 5 texts / request.
+ * This hook will process and update the worked sentiment 5 at a time 
+ * for the given number of texts
+ */
+export function useSentimentStream(apiKey: string) {
+    // checking the state of the sentiment results
+    //  if its ready for renditions
+    const [loading, setLoadstate] = useState<boolean>(true)
+    const [progress, setProgress] = useState<number>(0)
+    const [err, setErr] = useState<string | null>(null)
+
+    // The data to render the content
+
+    const [data, set] = useState<SentimentData>({})
+
+    // the text cap
+    const limit = COUNT_OF_TEXTS
+
+    const setSentimentstByStream = async (texts: Array<string>) => {
+        const allDataLength = texts.length
+
+        // split the data into batches that can be worked on
+        let N = allDataLength
+        if (N === 0) {
+            let errMessage = ("Please make sure you have atleast on input in the string")
+            setErr(errMessage)
+
+            throw new Error(errMessage)
+        } else {
+            let start_idx = 0
+            let end_idx: number = undefined
+    
+            let iter_count = 0
+            while (start_idx < N) {
+                // last index
+                end_idx = Math.min(limit - 1, N - start_idx) + start_idx
+                // end_idx = 
+    
+                console.log(iter_count, ": ", start_idx, " | ", end_idx)
+    
+                // but the set of texts needed to make 
+                //  the single request prediction
+                const temp_texts = {}
+                for (let ix = start_idx; ix <= end_idx ; ix++) {
+                    temp_texts[ix] = texts[ix]
+                }
+    
+                // the `temp_texts` has stored the temporary texts
+                //  for determining the sentiments in batches
+                try {
+                    console.log("Check the contents: ", temp_texts)
+                    const val = await getNPNSentiment(apiKey, temp_texts)
+                    
+                    // update data
+                    set(data => ({ ...data, ...val }))
+    
+                    // update progress
+                    setProgress(prevProg => (prevProg + (end_idx - start_idx)))
+                } catch (err) {
+                    setErr(err.message)
+
+                    throw err
+                }
+    
+                // update the indices
+                start_idx = end_idx + 1
+                iter_count++
+            }
+        }
+    
+        setLoadstate(false)
+
+    }
+
+    return {data, setSentiment: setSentimentstByStream, loading, progress, err}
+} 
