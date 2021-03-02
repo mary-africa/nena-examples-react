@@ -1,6 +1,7 @@
 import Head from 'next/head'
-import AnalyticalGraph from '../components/analytics/AnalyticalGraph'
-import ProtectedField from '../components/ProtectedField'
+import { Transition } from '@headlessui/react'
+import { useState } from 'react'
+import { getNPNSentiment, getTweetByQueryItem } from '../utils/query'
 
 
 function TwitterLogo(props: any) {
@@ -11,7 +12,71 @@ function TwitterLogo(props: any) {
     )
 }
 
-export default function Home() {
+// adding the type for base sentiment prediction
+type DistributionProps<LabelType extends string> = {
+    [type in LabelType]: number
+}
+
+/**
+ * Component that renders the output of the sentiment predictions
+ * @param props 
+ */
+function NPNDistribution(props: DistributionProps<NPNLabelType>) {
+    return (
+        <>
+            {
+                Object.keys(props).map(key => (
+                    <div key={key}>
+                        <label className="text-xl font-bold capitalize">{key}</label>
+                        <label>{Math.round(props[key] * 100)}</label>
+                    </div>
+                ))
+            }
+        </>
+    )
+}
+
+function ProgressBar ({ progressValue, show }: any) { 
+    return (
+        <Transition
+            show={Boolean(show || false)}
+            enter="transition transform duration-75 ease-in"
+            enterFrom="opacity-0 -translate-y-full"
+            enterTo="opacity-100 translate-y-0"
+            leave="transition transform duration-75 ease-out"
+            leaveFrom="opacity-100 translate-y-0"
+            leaveTo="opacity-0 -translate-y-full"
+            className="w-full">
+            <span className="block max-w-full p-0.5 translate transition duration-100 ease-in-out bg-red-500" style={{ width: `${progressValue * 100}%`}} />
+        </Transition>
+    )
+}
+
+interface HomeProps { 
+    apiKey: string
+}
+
+export default function Home(props: HomeProps) {
+    const [q, set] = useState<string>("")
+
+    const performSearchQuery = (() => {
+        console.log("Searching the information inputted")
+        getTweetByQueryItem(q)
+            .then(val => console.log(val))
+            .catch(err => console.error(err))
+            .finally(() => {
+                getNPNSentiment(props.apiKey, [
+                    "mimi ni mzembe",
+                    "mimi ni mzuri",
+                    "nakupenda",
+                    "acha ujinga"
+                ])
+                .then(val => console.log(val))
+                .catch(err => console.error(err))
+            })
+        
+    })
+    
     return (
         <>
             <Head>
@@ -19,7 +84,7 @@ export default function Home() {
             </Head>
             <div className="h-screen w-full">
                 {/* Header */}
-                <div className="bg-blue-50 py-10 border border-blue-300">
+                <div className="bg-blue-50 py-10 ">
                     <div className="mx-auto container">
                         {/* Title */}
                         <span className="inline-flex justify-start items-start gap-4">
@@ -30,49 +95,71 @@ export default function Home() {
                             </span>
                         </span>
                         {/* API Input */}
-                        <div className="grid grid-cols-2 gap-10 mt-8 mx-14">
+                        {/* <div className="grid grid-cols-2 gap-10 mt-8 mx-14">
                             <div className="space-y-2">
-                                <label className="text-sm font-bold">Please include the API Key</label>
-                                <ProtectedField value="asdasd" errShow={false} />
+                                <label className="text-sm font-bold">Please include  the API Key</label>
+                                <ProtectedField value={apiKey} onChange={(e) => setApiKey(e.target.value)} errShow={false} />
                             </div>
-                        </div>
+                        </div> */}
                         {/* Twitter content search */}
                         <div className="grid grid-cols-2 gap-10 mt-8 mx-14">
                             <div className="space-y-2">
                                 <label className="text-sm font-bold">Type in the twitter hashtag</label>
                                 <div className="relative">
                                     <span className="absolute inset-y-0 flex items-center pr-2 pl-3">
+                                        {/* search icon */}
                                         <svg className="h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
                                     </span>
-                                    <input className="focus:outline-none block w-full py-2 pl-10 sm:text-smtransition rounded-md border shadow-sm duration-100 ease-linear" placeholder="example: elimu-tanzania" />
+                                    <input 
+                                        value={q}
+                                        onChange={e => set(e.target.value)}
+                                        className="focus:outline-none block w-full py-2 pl-10 sm:text-smtransition rounded-md border shadow-sm duration-100 ease-linear" placeholder="example: #ElimikaWikiendi" />
                                 </div>
                             </div>
-                        </div> 
+                        </div>
+                         {/* Searching your entry */}
+                        <div className="grid grid-cols-3 gap-10 mt-8 mx-14">
+                            <button 
+                                onClick={performSearchQuery}
+                                type="button" 
+                                className="inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Search Query
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="mx-auto container py-10">
-                    <div className="flex flex-row gap-4">
-                        {/* Tweet data */}
-                        <div className="space-y-4">
-                        </div>
-
-                        {/* analysis / meta information */}
-                        <aside className="space-y-4">
-                            {/* tweet metadata */}
-                            <div>Obtained <b>34</b> tweets on <b>#elimu-tanzania</b></div>
-
-                            {/* Graph */}
-                            <div className="shadow-md rounded-xl border">
-                                <AnalyticalGraph width={590} height={400} />
+                <div className="border-t border-blue-300">
+                    <ProgressBar progressValue={0.334} show/>
+                    <div className="mx-auto container py-10 px-10">
+                        {/* <div className="flex flex-row gap-4">
+                            <div className="space-y-4">
                             </div>
-                        </aside>
+
+                            <aside className="space-y-4">
+                                <div>Obtained <b>34</b> tweets on <b>#elimu-tanzania</b></div>
+
+                                <div className="shadow-md rounded-xl border">
+                                    <AnalyticalGraph width={590} height={400} />
+                                </div>
+                            </aside>
+                        </div> */}
+                        {/* Building the results rendered */}
+                        <div className="">
+                            
+                        </div>
                     </div>
                 </div>
             </div>
         </>
     )
+}
+
+export async function getServerSideProps() {
+    return {
+        props: { apiKey:  process.env.NENA_PLAYGROUND_API_KEY }
+    }
 }
