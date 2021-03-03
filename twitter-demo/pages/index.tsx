@@ -71,7 +71,7 @@ const testTexts = [
     "acha ujinga",
 ]
 
-function SentimentDataView({ data, loading }: any) {
+function SentimentDataView({ data, loading, comment }: any) {
     const show = Object.values(data).length === 0
     return (
         <section className="w-full py-8">
@@ -92,8 +92,10 @@ function SentimentDataView({ data, loading }: any) {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-300 opacity-75" />
                         <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-400" />
                     </span>
-                    <span className="text-gray-400 text-3xl">
-                        Loading
+
+                    {/* Loading Text */}
+                    <span className="text-gray-400 text-2xl">
+                        Processing Sentiments...
                     </span>
                 </Transition>
                 
@@ -107,7 +109,7 @@ function SentimentArea({ className, data, progress, loading }: any) {
     return (
         <div className={className}>
             <ProgressBar progressValue={progress} show={loading}/>
-            <SentimentDataView data={data} loading={loading} />
+            <SentimentDataView data={data} loading={loading}/>
         </div>
     )
 }
@@ -119,7 +121,7 @@ export default function Home(props: HomeProps) {
     
     // useEffect(() => {
     //     console.log(loading, progress)
-    //     console.log("Data:", data)
+    //     console.log("Data:", JSON.stringify(data))
     // }, [loading])
 
     const performSearchQuery = (() => {
@@ -144,13 +146,6 @@ export default function Home(props: HomeProps) {
                                 <label className="text-gray-600">Using Nena Sentiment Service</label>
                             </span>
                         </span>
-                        {/* API Input */}
-                        {/* <div className="grid grid-cols-2 gap-10 mt-8 mx-14">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold">Please include  the API Key</label>
-                                <ProtectedField value={apiKey} onChange={(e) => setApiKey(e.target.value)} errShow={false} />
-                            </div>
-                        </div> */}
                         {/* Twitter content search */}
                         <div className="grid grid-cols-2 gap-10 mt-8 mx-14">
                             <div className="space-y-2">
@@ -171,7 +166,7 @@ export default function Home(props: HomeProps) {
                         </div>
                          {/* Searching your entry */}
                         <div className="grid grid-cols-3 gap-10 mt-8 mx-14">
-                            <button 
+                            <button
                                 onClick={performSearchQuery}
                                 type="button" 
                                 className="inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
