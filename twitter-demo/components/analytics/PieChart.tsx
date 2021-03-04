@@ -197,7 +197,7 @@ function AnimatedPie<Datum>({
                     x={centroidX}
                     y={centroidY}
                     dy=".33em"
-                    className="font-sans text-gray-600"
+                    className="font-sans text-gray-600 capitalize"
                     textAnchor="middle"
                     pointerEvents="none"
                   >

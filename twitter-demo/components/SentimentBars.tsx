@@ -39,9 +39,9 @@ function getPercentageString(value: sentimentNumber) {
 
 function SentimentBar({ label, value, className }: { label: string, value: sentimentNumber, className: any }) {
     return (
-        <div className="grid grid-cols-6 gap-4 items-center">
-            <label className="text-right">{label}</label>
-            <div className="col-span-5 h-5 w-full">
+        <div className="grid grid-cols-4 gap-4 items-center w-full">
+            <label className="block w-full text-right">{label}</label>
+            <div className="col-span-3 h-3 w-full">
                 {/* progress bar */}
                 <span className={className} style={{ width: getPercentageString(value)}}></span>
             </div>
@@ -56,7 +56,7 @@ export default function NPNSentimentBars(props: SentimentBarsProps<NPNLabelType>
         )
     }
     return (
-        <div className="grid grid-flow-row gap-2 w-full">
+        <div className="grid grid-flow-row gap-2 max-w-xs px-4 py-2 transtion duration-75 ease-in border hover:border-blue-500 rounded-md">
             {/* Happy emotion */}
             <SentimentBar label={props.labels.positive} value={props.sentiments.positive} className="block bg-green-400 h-full transform duration-200 ease-out" />
             <SentimentBar label={props.labels.neutral} value={props.sentiments.neutral} className="block bg-indigo-400 h-full transform duration-200 ease-out" />
