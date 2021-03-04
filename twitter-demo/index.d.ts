@@ -65,3 +65,14 @@ interface TwitterSearchMetadata {
     since_id_str: string
 }
 
+
+type SentimentValues<LabelType extends string> = {
+    [type in LabelType]: number
+}
+
+interface SentimentOutput<LabelType extends string> {
+    chosen: LabelType,
+    dist: SentimentValues<LabelType>
+}
+
+type SentimentData = { [id: string]: SentimentOutput<NPNLabelType> }

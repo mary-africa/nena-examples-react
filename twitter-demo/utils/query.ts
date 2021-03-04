@@ -14,15 +14,6 @@ import { nenaService, twitterService } from "./api";
  */
 const COUNT_OF_TEXTS = 5
 
-type SentimentValues<LabelType extends string> = {
-    [type in LabelType]: number
-}
-
-interface SentimentOutput<LabelType extends string> {
-    chosen: LabelType,
-    dist: SentimentValues<LabelType>
-}
-
 /**
  * 
  * @param apiKey API Key to access Nena service
@@ -32,6 +23,8 @@ export async function getNPNSentiment(apiKey: string, texts: { [id: number]: str
     if (Object.values(texts).length > COUNT_OF_TEXTS) {
         throw new Error("Make sure there are ATMOST 5 items in the `texts` list object")
     }
+
+    console.log(texts)
 
     try {
         const response = await nenaService({
@@ -51,14 +44,14 @@ export async function getNPNSentiment(apiKey: string, texts: { [id: number]: str
 
 
         const mainOutput: { [id: number]: SentimentOutput<NPNLabelType>} = {}
-        Object.keys(texts).forEach((ix, text_idx) => {
+        Object.keys(texts).forEach((_ix, text_idx) => {
             const output: SentimentValues<NPNLabelType> = {} as SentimentValues<NPNLabelType>
     
             labels.forEach((label: NPNLabelType, ix: number) => {
                 output[label] = logits[text_idx][ix]
             });
         
-            mainOutput[ix] = { chosen: labels[results[text_idx]], dist: output }
+            mainOutput[_ix] = { chosen: labels[results[text_idx]], dist: output }
         })
 
         return mainOutput
@@ -124,16 +117,15 @@ export async function getTweetByQueryItem(bearer_token: string, q: string, twitt
 }
 
 
-type SentimentData = { [id: number]: SentimentOutput<NPNLabelType> }
-
 // the text cap
 const limit = COUNT_OF_TEXTS
 
-async function * streamSentiments(apiKey: string, texts: Array<string>): AsyncGenerator<[SentimentData, number], any, any>{
-    const allDataLength = texts.length
-
+async function * streamSentiments(apiKey: string, texts: { [id: number]: string }): AsyncGenerator<[SentimentData, number], any, any>{
+    
+    const keyMaps = Object.keys(texts)
     // split the data into batches that can be worked on
-    let N = allDataLength
+    let N = keyMaps.length
+
     if (N === 0) {
         let errMessage = ("Please make sure you have atleast on input in the string")
         // setErr(errMessage)
@@ -141,21 +133,22 @@ async function * streamSentiments(apiKey: string, texts: Array<string>): AsyncGe
         throw new Error(errMessage)
     } else {
         let start_idx = 0
-        let end_idx: number = undefined
+        let end_idx: number;
 
         let iter_count = 0
         while (start_idx < N) {
             // last index
-            end_idx = Math.min(limit - 1, N - start_idx) + start_idx
-            // end_idx = 
 
-            console.log(iter_count, ": ", start_idx, " | ", end_idx)
+            // console.log(N, "-", start_idx, " = ", (N - start_idx))
+            end_idx = Math.min(limit, N - start_idx) + start_idx - 1
+
+            // console.log(iter_count, ": ", start_idx, " | ", end_idx)
 
             // but the set of texts needed to make 
             //  the single request prediction
             const temp_texts = {}
             for (let ix = start_idx; ix <= end_idx ; ix++) {
-                temp_texts[ix] = texts[ix]
+                temp_texts[keyMaps[ix]] = texts[keyMaps[ix]]
             }
 
             // the `temp_texts` has stored the temporary texts
@@ -169,7 +162,7 @@ async function * streamSentiments(apiKey: string, texts: Array<string>): AsyncGe
             const chunk = await getNPNSentiment(apiKey, temp_texts)
             const chunkSize = (end_idx - start_idx)
 
-            yield [chunk, chunkSize]
+            yield [chunk, (chunkSize + 1) / N]
 
             // update the indices
             start_idx = end_idx + 1
@@ -178,7 +171,13 @@ async function * streamSentiments(apiKey: string, texts: Array<string>): AsyncGe
     }
 }
 
-export function useSentiment(apiKey: string): [SentimentData, (texts: Array<string>) => Promise<void>, boolean, number, (string | null)] {
+/**
+ * Streaming the predictions for sentiment analysis
+ * Since the tool only allows working with 5 texts / request.
+ * This hook will process and update the worked sentiment 5 at a time 
+ * for the given number of texts
+ */
+export function useSentiment(apiKey: string): [SentimentData, (texts: {[id: number]: string}) => Promise<void>, boolean, number, (string | null)] {
     const [loading, setLoadstate] = useState<boolean>(false)
     const [progress, setProgress] = useState<number>(0)
     const [err, setErr] = useState<string | null>(null)
@@ -187,7 +186,7 @@ export function useSentiment(apiKey: string): [SentimentData, (texts: Array<stri
 
     const [data, set] = useState<SentimentData>({})  
     
-    const setData = async (texts: Array<string>) => {
+    const setData = async (texts: {[id: number]: string}) => {
         // set data
         setErr(null)
         setLoadstate(true)
@@ -196,18 +195,15 @@ export function useSentiment(apiKey: string): [SentimentData, (texts: Array<stri
         // reset data
         set({})
 
-        // length of the data
-        const _len = texts.length
-
         try {
-            for await (const chunkProg of streamSentiments(apiKey, texts)) {
-                const [chunk, chunkSize] = chunkProg
+            for await (const chunkLoadState of streamSentiments(apiKey, texts)) {
+                const [chunk, chunkProgToUpdate] = chunkLoadState
 
                 // Chunk
                 set(data => ({ ...data, ...chunk }))
 
                 // Progress bar
-                setProgress(prog => prog + ((chunkSize + 1) / _len))
+                setProgress(prog => prog + chunkProgToUpdate)
             }
         } catch (err) {
             // setting err
@@ -220,83 +216,3 @@ export function useSentiment(apiKey: string): [SentimentData, (texts: Array<stri
 
     return [data, setData, loading, progress, err]
 }
-
-
-/**
- * Streaming the predictions for sentiment analysis
- * Since the tool only allows working with 5 texts / request.
- * This hook will process and update the worked sentiment 5 at a time 
- * for the given number of texts
- */
-export function useSentimentStream(apiKey: string) {
-    // checking the state of the sentiment results
-    //  if its ready for renditions
-    const [loading, setLoadstate] = useState<boolean>(true)
-    const [progress, setProgress] = useState<number>(0)
-    const [err, setErr] = useState<string | null>(null)
-
-    // The data to render the content
-
-    const [data, set] = useState<SentimentData>({})
-
-    // the text cap
-    const limit = COUNT_OF_TEXTS
-
-    const setSentimentstByStream = async (texts: Array<string>) => {
-        const allDataLength = texts.length
-
-        // split the data into batches that can be worked on
-        let N = allDataLength
-        if (N === 0) {
-            let errMessage = ("Please make sure you have atleast on input in the string")
-            setErr(errMessage)
-
-            throw new Error(errMessage)
-        } else {
-            let start_idx = 0
-            let end_idx: number = undefined
-    
-            let iter_count = 0
-            while (start_idx < N) {
-                // last index
-                end_idx = Math.min(limit - 1, N - start_idx) + start_idx
-                // end_idx = 
-    
-                console.log(iter_count, ": ", start_idx, " | ", end_idx)
-    
-                // but the set of texts needed to make 
-                //  the single request prediction
-                const temp_texts = {}
-                for (let ix = start_idx; ix <= end_idx ; ix++) {
-                    temp_texts[ix] = texts[ix]
-                }
-    
-                // the `temp_texts` has stored the temporary texts
-                //  for determining the sentiments in batches
-                try {
-                    console.log("Check the contents: ", temp_texts)
-                    const val = await getNPNSentiment(apiKey, temp_texts)
-                    
-                    // update data
-                    set(data => ({ ...data, ...val }))
-    
-                    // update progress
-                    setProgress(prevProg => (prevProg + (end_idx - start_idx)))
-                } catch (err) {
-                    setErr(err.message)
-
-                    throw err
-                }
-    
-                // update the indices
-                start_idx = end_idx + 1
-                iter_count++
-            }
-        }
-    
-        setLoadstate(false)
-
-    }
-
-    return {data, setSentiment: setSentimentstByStream, loading, progress, err}
-} 

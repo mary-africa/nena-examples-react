@@ -7,7 +7,8 @@ import e from "cors";
 console.log(process.env.APP_URL)
 
 export const twitterService = axios.create({
-    baseURL: 'https://api.twitter.com/1.1/',
+    // adding the cors anywhere
+    baseURL: 'https://cors-anywhere.herokuapp.com/https://api.twitter.com/1.1/',
     headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET",

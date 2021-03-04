@@ -1,7 +1,8 @@
 import Head from 'next/head'
 import { Transition } from '@headlessui/react'
-import { useEffect, useState } from 'react'
-import { getNPNSentiment, getTweetByQueryItem, useSentiment, useSentimentStream } from '../utils/query'
+import { useCallback, useEffect, useState } from 'react'
+import { getTweetByQueryItem, useSentiment } from '../utils/query'
+import GlobalStatistics from '../components/GlobalStatistics'
 
 
 function TwitterLogo(props: any) {
@@ -58,25 +59,17 @@ interface HomeProps {
 }
 
 
-const testTexts = [
-    "mimi ni mzembe",
-    "mimi ni mzuri",
-    "nakupenda",
-    "acha ujinga",
-    "nakupenda",
-    "acha ujinga",
-    "nakupenda",
-    "acha ujinga",
-    "nakupenda",
-    "acha ujinga",
-]
+const _data: SentimentData = {"1367064994601394200":{"chosen":"positive","dist":{"neutral":0.39143828127028735,"positive":0.7251958250999451,"negative":0.19492176262428984}},"1367041880588968000":{"chosen":"negative","dist":{"neutral":0.5258905743054736,"positive":0.20076581835746765,"negative":0.5696971291908994}},"1367032245609971700":{"chosen":"positive","dist":{"neutral":0.4925966290951086,"positive":0.6518808603286743,"negative":0.2429968152428046}},"1367029479282004000":{"chosen":"neutral","dist":{"neutral":0.6007831429694004,"positive":0.26256346702575684,"negative":0.5416236954624765}},"1365907736953835500":{"chosen":"positive","dist":{"neutral":0.3338188835186884,"positive":0.7569363713264465,"negative":0.1575190315488726}},"1366700014672748500":{"chosen":"positive","dist":{"neutral":0.1593067126426225,"positive":0.8667396306991577,"negative":0.057907685870304704}},"1366712891383160800":{"chosen":"neutral","dist":{"neutral":0.7877591933356598,"positive":0.4389517903327942,"negative":0.38426282233558595}},"1365960246066360300":{"chosen":"neutral","dist":{"neutral":0.7937364978715777,"positive":0.30695125460624695,"negative":0.35446745716035366}},"1364899693663256600":{"chosen":"positive","dist":{"neutral":0.3897036011524809,"positive":0.718253493309021,"negative":0.18589781469199806}}}
+
+// const testTexts = {"1367064994601394200":"\"Watoto wote wa kike wanaosoma katika shule za Serikali watakaopata daraja la kwanza katika kipindi cha miaka mitan… https://t.co/YwIrbdzAjJ","1367041880588968000":"👉Ongezeka la haraka la watu\n👉utengenezaji wa ajira ni kidogo na hauko sawia\n👉kiwango duni cha elimu na ufinyu wa fu… https://t.co/lYHCPPfJuD","1367032245609971700":"Lazima Serikali zihakikishe usawa katika upatikanaji wa elimu isiyokuwa na ubaguzi.   #ArudiShule #ElimuBilaUbaguzi… https://t.co/emrJXm4xSI","1367029479282004000":"Wasichana wa vijijini wana uwezekano wa karibu mara mbili ya wale wa mijini wa kupata watoto kabla hawajafikia umri… https://t.co/DY4OhcFOLR","1365907736953835500":"Tulisema yalivuonunuliwa CASH haya madude hayato tengeneza FAIDA. Tukaitwa WASALITI! Msaliti kwa sababu tunakwambie… https://t.co/FVdmDwS7U2","1366700014672748500":"Elimu bure! Nyenyeeenyeee! Uchumi wa kati ! Sijui sisi matajiri! @wizara_elimuTz hii ni Shule ya Msingi Tindabuligi… https://t.co/zbvqhZE9nU","1366712891383160800":"Utafiti wa Kidemografia na Afya Tanzania ya mwaka 2015-16, unaonyesha Utoaji wa elimu sawa kwa watoto umekuwa ukiku… https://t.co/amGjyH4qNA","1365960246066360300":"Meko ni dikteta! Ni vyema watu wakajua tofauti ya reformist na mharibifu! Meko ni mharibifu na hajawahi kuwa reform… https://t.co/uGmX7HIGik","1364899693663256600":"Watoto wote wana haki ya kupata elimu, Tanzania tunabagua sana watoto wa kike.  #ArudiShule #ElimuBilaUbaguzi https://t.co/REqmNLm9wv"}
 
 function SentimentDataView({ data, loading, comment }: any) {
-    const show = Object.values(data).length === 0
+    const show = Object.values(data).length !== 0
+
     return (
         <section className="w-full py-8">
-            {/* loading animation */}
             <div className="mx-auto container px-14">
+                {/* loading animation */}
                 <Transition
                     show={loading}
                     enter="transition transform duration-75 ease-in-out"
@@ -100,6 +93,18 @@ function SentimentDataView({ data, loading, comment }: any) {
                 </Transition>
                 
                 {/* Show the distribution of data */}
+
+                <Transition
+                    show={show && !loading}
+                    enter="transition transform duration-75 ease-in-out"
+                    enterFrom="-translate-y-full opacity-0"
+                    enterTo="translate-y-0 opacity-100"
+                    leave="transition transform duration-75 ease-in-out"
+                    leaveFrom="translate-y-0 opacity-100"
+                    leaveTo="-translate-y-full opacity-0"
+                    className="w-full inline-flex flex-row space-x-4 my-3 items-center">
+                        <GlobalStatistics data={_data} />
+                </Transition>
             </div>
         </section>
     )
@@ -119,68 +124,94 @@ export default function Home(props: HomeProps) {
     const [q, set] = useState<string>("")
     const [data, setData, loading, progress, err] = useSentiment(props.apiKey)
     
-    // useEffect(() => {
-    //     console.log(loading, progress)
-    //     console.log("Data:", JSON.stringify(data))
-    // }, [loading])
+    useEffect(() => {
+        console.log(loading, progress)
+        console.log("Data:", JSON.stringify(data))
+    }, [loading])
 
-    const performSearchQuery = (() => {
-        console.log("Searching the information inputted...")
-        setData(testTexts)
-    })
+    const performSearchQuery = useCallback(() => {
+        console.log("Searching the information inputted...");
+        // setData(testTexts)
+        getTweetByQueryItem(props.bearerToken, q)
+            .then(val => {
+                // Building the text data
+                const inputData: { [id: number]: string } = {}                
+                val.statuses.forEach(_v => {
+                    inputData[_v.id] = _v.text
+                })
+
+                console.log("Text data:", JSON.stringify(inputData))
+                return setData(inputData)
+            })
+            .catch(err => console.error(err))
+    }, [q])
     
     return (
         <>
             <Head>
                 <title>Twitter Demo</title>
             </Head>
-            <div className="h-screen w-full">
-                {/* Header */}
-                <div className="bg-blue-50 py-10 ">
-                    <div className="mx-auto container">
-                        {/* Title */}
-                        <span className="inline-flex justify-start items-start gap-4">
-                            <TwitterLogo className="h-10 w-10"/>
-                            <span className="inline-block space-y-4">
-                                <h1 className="font-bold text-3xl">Twitter Demo</h1>
-                                <label className="text-gray-600">Using Nena Sentiment Service</label>
+            <div className="h-screen w-full flex flex-col justify-between">
+                <div className="w-full">
+                    {/* Header */}
+                    <div className="bg-blue-50 py-10 ">
+                        <div className="mx-auto container">
+                            {/* Title */}
+                            <span className="inline-flex justify-start items-start gap-4">
+                                <TwitterLogo className="h-10 w-10"/>
+                                <span className="inline-block space-y-4">
+                                    <h1 className="font-bold text-3xl">Twitter Demo</h1>
+                                    <label className="text-gray-600">Using Nena Sentiment Service</label>
+                                </span>
                             </span>
-                        </span>
-                        {/* Twitter content search */}
-                        <div className="grid grid-cols-2 gap-10 mt-8 mx-14">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold">Type in the twitter hashtag</label>
-                                <div className="relative">
-                                    <span className="absolute inset-y-0 flex items-center pr-2 pl-3">
-                                        {/* search icon */}
-                                        <svg className="h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </span>
-                                    <input 
-                                        value={q}
-                                        onChange={e => set(e.target.value)}
-                                        className="focus:outline-none block w-full py-2 pl-10 sm:text-smtransition rounded-md border shadow-sm duration-100 ease-linear" placeholder="example: #ElimikaWikiendi" />
+                            {/* Twitter content search */}
+                            <div className="grid grid-cols-2 gap-10 mt-8 mx-14">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold">Type in the twitter hashtag</label>
+                                    <div className="relative">
+                                        <span className="absolute inset-y-0 flex items-center pr-2 pl-3">
+                                            {/* search icon */}
+                                            <svg className="h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </span>
+                                        <input 
+                                            value={q}
+                                            onChange={e => set(e.target.value)}
+                                            className="focus:outline-none block w-full py-2 pl-10 sm:text-smtransition rounded-md border shadow-sm duration-100 ease-linear" placeholder="example: #ElimikaWikiendi" />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                         {/* Searching your entry */}
-                        <div className="grid grid-cols-3 gap-10 mt-8 mx-14">
-                            <button
-                                onClick={performSearchQuery}
-                                type="button" 
-                                className="inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Search Query
-                            </button>
+                            {/* Searching your entry */}
+                            <div className="grid grid-cols-3 gap-10 mt-8 mx-14">
+                                <button
+                                    onClick={performSearchQuery}
+                                    type="button" 
+                                    className="inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Search Query
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Content */}
-                <SentimentArea className="border-t border-blue-300"
-                    data={data}
-                    loading={loading}
-                    progress={progress} />
+                    {/* Content */}
+                    <SentimentArea className="border-t border-blue-300"
+                        count={34}
+                        data={data}
+                        loading={loading}
+                        progress={progress} />
+                </div>
+                <footer className="mx-auto container px-4 md:px-10 md:py-8">
+                    <p className="text-gray-600">
+                        Made with 
+                        <span className="inline-flex justify-center items-center flex-row p-1">
+                            <svg className="h-5 w-5 text-red-900" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                            </svg>
+                        </span>
+                        by Mary.Africa
+                    </p>
+                </footer>
             </div>
         </>
     )
