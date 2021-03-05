@@ -73,7 +73,6 @@ export async function getNPNSentiment(apiKey: string, texts: { [id: number]: str
 }
 
 const DEFAULT_TWITTER_QUERY_OPTIONS = {
-    result_type: 'popular',
     place_country: "TZ"
 }
 
@@ -88,7 +87,7 @@ export async function getTweetByQueryItem(bearer_token: string, q: string, twitt
     try {
         const response = await twitterService.get('/search/tweets.json', {
             params: {
-                q,
+                q: `#${q}`,
                 ...(twitterQueryOptions || DEFAULT_TWITTER_QUERY_OPTIONS)
             },
             headers: {
